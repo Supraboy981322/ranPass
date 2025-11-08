@@ -9,8 +9,9 @@ What? A *very* basic random string/password generator. Why? Glad you asked, next
 
 TODO (maybe, no promises)
 - [x] an http server 
+- [x] Primitive password builder tool (parameters)
 - [ ] An interface-less terminal command
 - [ ] A very basic tui
 - [ ] A very basic web interface 
-- [ ] A password builder tool (parameters)
+- [ ] Nice password builder tool
 - [ ] I'm sure I'd think of something else if I tried.

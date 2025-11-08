@@ -3,6 +3,7 @@ package main
 import(
 	"os"
 	"strconv"
+	"strings"
 	"math/big"
 	"net/http"
 	"crypto/rand" //what, did you expect math.Rand? I'm not stupid
@@ -38,12 +39,22 @@ var (
 
 func main() {
 	http.HandleFunc("/gen", genHan)
+	http.HandleFunc("/bld", buildHan)
 
 	log.Infof(
 		"listening on port: %s", port)
 
 	log.Fatal(
 		http.ListenAndServe(":"+port, nil))
+}
+
+func buildHan(w http.ResponseWriter, r *http.Request) {
+	//log req
+	log.Infof("req: /bld ;  len: %d", l)
+
+	charsRaw := r.Header.Get("chars")
+	chars = strings.Split(charsRaw, "")
+	genHan(w, r)
 }
 
 func genHan(w http.ResponseWriter, r *http.Request) {
@@ -60,9 +71,15 @@ func genHan(w http.ResponseWriter, r *http.Request) {
 			r.RemoteAddr + "\n"))
 		w.Write([]byte("Event logged.\n"))
 	} else {
+		lStr := r.Header.Get("len")
+		//if no len, default to 16
+		if lStr == "" {
+			lStr = "16"
+		}
+
 		//get val len from header as Int64
 		l, err := strconv.ParseInt(
-			r.Header.Get("len"), 10, 64)
+			lStr, 10, 64)
 		hanErr(err, w, "invalid number")
 
 		//make sure they're not being
