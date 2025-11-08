@@ -3,9 +3,9 @@ package main
 import(
 	"os"
 	"strconv"
-	"crypto/rand"
 	"math/big"
 	"net/http"
+	"crypto/rand" //what, did you expect math.Rand? I'm not stupid
 
 	"github.com/charmbracelet/log"
 )
