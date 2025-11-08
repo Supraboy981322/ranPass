@@ -49,11 +49,12 @@ func main() {
 }
 
 func buildHan(w http.ResponseWriter, r *http.Request) {
-	//log req
-	log.Infof("req: /bld ;  len: %d", l)
-
 	charsRaw := r.Header.Get("chars")
 	chars = strings.Split(charsRaw, "")
+
+	//log req
+	log.Infof("req: /bld ;  chars: %s", charsRaw)
+
 	genHan(w, r)
 }
 
