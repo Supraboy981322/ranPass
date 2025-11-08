@@ -38,8 +38,9 @@ func main() {
 
 func genHan(w http.ResponseWriter, r *http.Request) {
 	if len(r.Header.Get("len")) >= 18 {
-		log.Println("overflow attempt. direct ip %s which has remote x-forwarded %s", r.RemoteAddr, r.Header.Get("X-Forwarded-For"))
-		w.Write([]byte("Nice try dumbass\n"))
+		log.Printf("overflow attempt: direct ip %s\n", r.RemoteAddr)
+		w.Write([]byte("Nice try moron.\n"))
+		w.Write([]byte("Detected IP:  " + r.RemoteAddr + "\n"))
 	} else {
 		l, err := strconv.ParseInt(r.Header.Get("len"), 10, 64)
 		if l < 0 {
