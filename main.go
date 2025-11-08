@@ -10,8 +10,13 @@ import(
 )
 
 var (
+	//port (might make toml)
 	port = "2628"
+
+	//cli args
 	args = os.Args[1:]
+
+	//char pool
 	chars = []string{
 		"a", "b",	"c", "d", "e", "f", "g",
 		"h", "i", "j", "k", "l", "m", "n",
@@ -32,23 +37,51 @@ var (
 
 func main() {
 	http.HandleFunc("/gen", genHan)
-	log.Printf("listening on port: %s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+
+	log.Printf(
+		"listening on port: %s\n", port)
+
+	log.Fatal(
+		http.ListenAndServe(":"+port, nil))
 }
 
 func genHan(w http.ResponseWriter, r *http.Request) {
+	//if overflow attempt deny req
 	if len(r.Header.Get("len")) >= 18 {
-		log.Printf("overflow attempt: direct ip %s\n", r.RemoteAddr)
+		log.Printf(
+			"overflow attempt: ip %s\n",
+			r.RemoteAddr)
+
+		//felt it was mildly cringe, so I wrote it
 		w.Write([]byte("Nice try moron.\n"))
-		w.Write([]byte("Detected IP:  " + r.RemoteAddr + "\n"))
+		w.Write([]byte("Detected IP:  " + 
+			r.RemoteAddr + "\n"))
+		w.Write([]byte("Event logged.\n"))
 	} else {
-		l, err := strconv.ParseInt(r.Header.Get("len"), 10, 64)
+		//get val len from header 
+		l, err := strconv.ParseInt(
+			r.Header.Get("len"), 10, 64)
+		hanErr(err)
+		//make sure they're not being
+		// a moron
 		if l < 0 {
+			w.Write([]byte(
+				"Trade offer\n"+
+				"  You give me:\n"+
+				"    negative\n"+
+				"  I give you\n"+
+				"    positive\n"))
+			w.Write([]byte("Too bad I don't "+
+				"know your answer; positive it "+
+				"is\n"))
 			l = -l
 		}
-		hanErr(err)
-		log.Printf("req: /gen  ;  len: %d", l)
-		w.Write([]byte(genStr(l)))
+		if l > 56527 {
+			w.Write([]byte("The hell do you need a random string longer than 56,527 characters for?\n"))
+		} else {
+			log.Printf("req: /gen  ;  len: %d", l)
+			w.Write([]byte(genStr(l)))
+		}
 	}
 }
 
