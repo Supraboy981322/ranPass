@@ -38,8 +38,7 @@ var (
 )
 
 func main() {
-	http.HandleFunc("/gen", genHan)
-	http.HandleFunc("/bld", buildHan)
+	http.HandleFunc("/", httpHandler)
 
 	log.Infof(
 		"listening on port: %s", port)
@@ -48,19 +47,17 @@ func main() {
 		http.ListenAndServe(":"+port, nil))
 }
 
-func buildHan(w http.ResponseWriter, r *http.Request) {
-	charsRaw := r.Header.Get("chars")
-	chars = strings.Split(charsRaw, "")
+func httpHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "mtd not allowed", http.StatusMethodNotAllowed)
+		log.Warn(w, "req: %s  ; mtd not allowed!", r.URL.Path)
+		return
+	}
 
-	//log req
-	log.Infof("req: /bld  ;  chars: %s", charsRaw)
+	lenStr := r.Header.Get("len")
 
-	genHan(w, r)
-}
-
-func genHan(w http.ResponseWriter, r *http.Request) {
 	//if overflow attempt deny req
-	if len(r.Header.Get("len")) >= 18 {
+	if len(lenStr) >= 18 {
 		//log it
 		log.Warnf(
 			"overflow attempt: ip %s\n",
@@ -71,57 +68,71 @@ func genHan(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Detected IP:  " + 
 			r.RemoteAddr + "\n"))
 		w.Write([]byte("Event logged.\n"))
-	} else {
-		lStr := r.Header.Get("len")
-		//if no len, default to 16
-		if lStr == "" {
-			lStr = "16"
-		}
-
-		//get val len from header as Int64
-		l, err := strconv.ParseInt(
-			lStr, 10, 64)
-		hanErr(err, w, "invalid number")
-
-		//make sure they're not being
-		// a moron
-		if l < 0 {
-			w.Write([]byte(
-				"Trade offer\n"+
-				"  You give me:\n"+
-				"    negative\n"+
-				"  I give you:\n"+
-				"    positive\n"))
-
-			w.Write([]byte("Too bad I don't "+
-				"know your answer; positive it "+
-				"is\n"))
-
-			//make positive
-			l = -l
-		}
-
-		//prevent weirdos from trying to
-		//  gen strings longer than
-		//  56,527 chars
-		if l > 56527 {
-			//let client know
-			w.Write([]byte("The hell do you "+
-				"need a random string longer "+
-				"than 56,527 characters for?\n"))
-
-			//log it
-			log.Warnf("%s%s%d\n",
-				"uhhh, requested length longer ",
-				"than 56,527 characters:  ", l)
-		} else {
-			//log req
-			log.Infof("req: /gen  ;  len: %d", l)
-
-			//gen and resp
-			w.Write([]byte(genStr(l, w)))
-		}
+		return
 	}
+
+	//if no len, default to 16
+	if lenStr == "" {
+		lenStr = "16"
+	}
+
+	switch (r.URL.Path) {
+	case "/gen":
+		//log req
+		log.Infof("req: /gen  ;  len: %s", lenStr)
+		gen(lenStr, w)
+	case "/bld":
+		charsRaw := r.Header.Get("chars")
+		chars = strings.Split(charsRaw, "")
+
+		//log req
+		log.Infof("req: /bld  ;  len: %s  ;  chars: %s", lenStr, charsRaw)
+		
+		//gen
+		gen(lenStr, w)
+	}
+}
+
+func gen(lStr string, w http.ResponseWriter) {
+	//get val len from header as Int64
+	l, err := strconv.ParseInt(lStr, 10, 64)
+	hanErr(err, w, "invalid number")
+	
+	//make sure they're not being a moron
+	if l < 0 {
+		w.Write([]byte(
+			"Trade offer\n"+
+			"  You give me:\n"+
+			"    negative\n"+
+			"  I give you:\n"+
+			"    positive\n"))
+
+		w.Write([]byte("Too bad I don't "+
+			"know your answer; positive it "+
+			"is\n"))
+
+		//make positive
+		l = -l
+	}
+
+	//prevent weirdos from trying to
+	//  gen strings longer than
+	//  56,527 chars
+	if l > 56527 {
+		//let client know
+		w.Write([]byte("The hell do you "+
+			"need a random string longer "+
+			"than 56,527 characters for?\n"))
+
+		//log it
+		log.Warnf("%s%s%d\n",
+			"uhhh, requested length longer ",
+			"than 56,527 characters:  ", l)
+		return
+	}
+
+	//gen and resp
+	w.Write([]byte(genStr(l, w)))
 }
 
 func genStr(l int64, w http.ResponseWriter) string {
