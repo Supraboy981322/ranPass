@@ -48,6 +48,7 @@ func main() {
 func genHan(w http.ResponseWriter, r *http.Request) {
 	//if overflow attempt deny req
 	if len(r.Header.Get("len")) >= 18 {
+		//log it
 		log.Printf(
 			"overflow attempt: ip %s\n",
 			r.RemoteAddr)
@@ -58,10 +59,11 @@ func genHan(w http.ResponseWriter, r *http.Request) {
 			r.RemoteAddr + "\n"))
 		w.Write([]byte("Event logged.\n"))
 	} else {
-		//get val len from header 
+		//get val len from header as Int64
 		l, err := strconv.ParseInt(
 			r.Header.Get("len"), 10, 64)
 		hanErr(err)
+
 		//make sure they're not being
 		// a moron
 		if l < 0 {
@@ -69,17 +71,35 @@ func genHan(w http.ResponseWriter, r *http.Request) {
 				"Trade offer\n"+
 				"  You give me:\n"+
 				"    negative\n"+
-				"  I give you\n"+
+				"  I give you:\n"+
 				"    positive\n"))
+
 			w.Write([]byte("Too bad I don't "+
 				"know your answer; positive it "+
 				"is\n"))
+
+			//make positive
 			l = -l
 		}
+
+		//prevent weirdos from trying to
+		//  gen strings longer than
+		//  56,527 chars
 		if l > 56527 {
-			w.Write([]byte("The hell do you need a random string longer than 56,527 characters for?\n"))
+			//let client know
+			w.Write([]byte("The hell do you "+
+				"need a random string longer "+
+				"than 56,527 characters for?\n"))
+
+			//log it
+			log.Printf("%s%s%d\n",
+				"uhhh, requested length longer ",
+				"than 56,527 characters:  ", l)
 		} else {
+			//log req
 			log.Printf("req: /gen  ;  len: %d", l)
+
+			//gen and resp
 			w.Write([]byte(genStr(l)))
 		}
 	}
@@ -88,20 +108,31 @@ func genHan(w http.ResponseWriter, r *http.Request) {
 func genStr(l int64) string {
 	var res string
 	var i int64
+	
+	//gen ran nums and get val from
+	//  char arr, then add to str
 	for i = 0; i < l; i++ {
 		ranDig := genInt(len(chars))
 		res += chars[ranDig]
 	}
+
 	return res
 }
 
-func genInt(l int) int {
-	bigInt := big.NewInt(int64(l))
+func genInt(m int) int {
+	//conv max int to bit.Int
+	bigInt := big.NewInt(int64(m))
+	
+	//actually gen num
 	i, err := rand.Int(rand.Reader, bigInt)
 	hanErr(err)
+
+	//return as prim int
 	return int(i.Int64())
 }
 
+
+//if err != nil {...} solved
 func hanErr(err error) {
 	if err != nil {
 		log.Fatal(err)
