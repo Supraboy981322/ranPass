@@ -2,11 +2,12 @@ package main
 
 import(
 	"os"
-	"log"
 	"strconv"
 	"crypto/rand"
 	"math/big"
 	"net/http"
+
+	"github.com/charmbracelet/log"
 )
 
 var (
@@ -38,7 +39,7 @@ var (
 func main() {
 	http.HandleFunc("/gen", genHan)
 
-	log.Printf(
+	log.Infof(
 		"listening on port: %s\n", port)
 
 	log.Fatal(
@@ -49,7 +50,7 @@ func genHan(w http.ResponseWriter, r *http.Request) {
 	//if overflow attempt deny req
 	if len(r.Header.Get("len")) >= 18 {
 		//log it
-		log.Printf(
+		log.Warnf(
 			"overflow attempt: ip %s\n",
 			r.RemoteAddr)
 
@@ -92,12 +93,12 @@ func genHan(w http.ResponseWriter, r *http.Request) {
 				"than 56,527 characters for?\n"))
 
 			//log it
-			log.Printf("%s%s%d\n",
+			log.Warnf("%s%s%d\n",
 				"uhhh, requested length longer ",
 				"than 56,527 characters:  ", l)
 		} else {
 			//log req
-			log.Printf("req: /gen  ;  len: %d", l)
+			log.Infof("req: /gen  ;  len: %d", l)
 
 			//gen and resp
 			w.Write([]byte(genStr(l)))
@@ -135,6 +136,6 @@ func genInt(m int) int {
 //if err != nil {...} solved
 func hanErr(err error) {
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 }
