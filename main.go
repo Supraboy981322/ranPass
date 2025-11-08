@@ -3,13 +3,14 @@ package main
 import(
 	"os"
 	"log"
-	"fmt"
 	"strconv"
 	"crypto/rand"
 	"math/big"
+	"net/http"
 )
 
 var (
+	port = "2628"
 	args = os.Args[1:]
 	chars = []string{
 		"a", "b",	"c", "d", "e", "f", "g",
@@ -27,22 +28,33 @@ var (
 		"'", "\"", "<", ">", "/", "?", ".",
 		",",
 	}
-	res string
 )
 
 func main() {
-	fmt.Println(len(chars))
-	l, err := strconv.Atoi(args[0])
+	http.HandleFunc("/gen", genHan)
+	log.Printf("listening on port: %s\n", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+func genHan(w http.ResponseWriter, r *http.Request) {
+	l, err := strconv.ParseInt(r.Header.Get("len"), 10, 64)
 	hanErr(err)
-	for i := 0; i < l; i++ {
+	log.Printf("req: /gen  ;  len: %d", l)
+	w.Write([]byte(genStr(l)))
+}
+
+func genStr(l int64) string {
+	var res string
+	var i int64
+	for i = 0; i < l; i++ {
 		ranDig := genInt(len(chars))
 		res += chars[ranDig]
 	}
-	fmt.Println(res)
+	return res
 }
 
-func genInt(len int) int {
-	bigInt := big.NewInt(int64(len))
+func genInt(l int) int {
+	bigInt := big.NewInt(int64(l))
 	i, err := rand.Int(rand.Reader, bigInt)
 	hanErr(err)
 	return int(i.Int64())
