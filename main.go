@@ -40,7 +40,7 @@ func main() {
 	http.HandleFunc("/gen", genHan)
 
 	log.Infof(
-		"listening on port: %s\n", port)
+		"listening on port: %s", port)
 
 	log.Fatal(
 		http.ListenAndServe(":"+port, nil))
@@ -63,7 +63,7 @@ func genHan(w http.ResponseWriter, r *http.Request) {
 		//get val len from header as Int64
 		l, err := strconv.ParseInt(
 			r.Header.Get("len"), 10, 64)
-		hanErr(err)
+		hanErr(err, w, "invalid number")
 
 		//make sure they're not being
 		// a moron
@@ -101,32 +101,32 @@ func genHan(w http.ResponseWriter, r *http.Request) {
 			log.Infof("req: /gen  ;  len: %d", l)
 
 			//gen and resp
-			w.Write([]byte(genStr(l)))
+			w.Write([]byte(genStr(l, w)))
 		}
 	}
 }
 
-func genStr(l int64) string {
+func genStr(l int64, w http.ResponseWriter) string {
 	var res string
 	var i int64
 	
 	//gen ran nums and get val from
 	//  char arr, then add to str
 	for i = 0; i < l; i++ {
-		ranDig := genInt(len(chars))
+		ranDig := genInt(len(chars), w)
 		res += chars[ranDig]
 	}
 
 	return res
 }
 
-func genInt(m int) int {
+func genInt(m int, w http.ResponseWriter) int {
 	//conv max int to bit.Int
 	bigInt := big.NewInt(int64(m))
 	
 	//actually gen num
 	i, err := rand.Int(rand.Reader, bigInt)
-	hanErr(err)
+	hanErr(err, w, "generating num")
 
 	//return as prim int
 	return int(i.Int64())
@@ -134,8 +134,10 @@ func genInt(m int) int {
 
 
 //if err != nil {...} solved
-func hanErr(err error) {
+func hanErr(err error, w http.ResponseWriter, str string) {
 	if err != nil {
+		w.Write([]byte("server err, sorry\n"))
+		w.Write([]byte("  reason: " + str + "\n"))
 		log.Error(err)
 	}
 }
