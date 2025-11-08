@@ -53,7 +53,7 @@ func buildHan(w http.ResponseWriter, r *http.Request) {
 	chars = strings.Split(charsRaw, "")
 
 	//log req
-	log.Infof("req: /bld ;  chars: %s", charsRaw)
+	log.Infof("req: /bld  ;  chars: %s", charsRaw)
 
 	genHan(w, r)
 }
